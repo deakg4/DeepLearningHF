@@ -17,15 +17,22 @@ import matplotlib.gridspec as GridSpec
 import os
 import matplotlib.pyplot as plt
 from sklearn.preprocessing import StandardScaler
+from scipy.io import wavfile
+
+""" 1. Python nyelven olvass be öt darab tetszőleges 256x256 pixeles színes képet, jelenítsd meg és jelenítsd meg külön az
+        R, G és B csatornák értékeit hisztogramon. (4p)
+    2. Csatornánként számold ki a pixelek átlagát és szórását minden képre, majd alakítsd át ezeket 0 várható értékű,
+        1 szórású adathalmazzá. Ezt követően ellenőrizd a kapott adathalmaz várható értékét és szórását. (4p)"""
+
 dst_img = "/home/deak/PycharmProjects/DeepLearning/DLkisHF1/images/"
+dst_snd = "/home/deak/PycharmProjects/DeepLearning/DLkisHF1/sounds/"
 
 arr = np.array(Image.open(os.path.join(dst_img, "kakashi.png")))
 print("Shape of array: ", arr.shape)
 print("Dimensions of array: ", arr.ndim)
-
-
 #listing files in images folder
 list_img = os.listdir(dst_img)#iterating over dst_image to get the images as arrays
+list_snd = os.listdir(dst_snd)#iterating over dst_sounds to get the sounds as arrays
 
 print("Number of files: ", len(list_img))
 
@@ -44,26 +51,26 @@ for image in sorted(list_img):
     # plt.imshow(arr)
     if arr_dim == 2:
         # img = Image.fromarray(arr, 'L')
-        arr_mean = np.mean(arr)
-        arr_std = np.std(arr)
-        print(f'[{file_name}, greyscale mean={arr_mean:.1f}], greyscale std={arr_std:.1f}')
+        arr_mean = np.mean(arr)     # calculating the mean for array
+        arr_std = np.std(arr)   # calculating the standard deviation for array
+        print(f'[{file_name}, greyscale mean={arr_mean:.1f}], greyscale std={arr_std:.1f}')     # plotting the mean and the std
         fig, ax = plt.subplots(2, 1)
         plt.subplot(211)
-        plt.imshow(arr)
+        plt.imshow(arr)     # plot the image
         plt.subplot(212)
-        plt.hist(arr.ravel(), bins=256, fc='k', ec='k')
+        plt.hist(arr.ravel(), bins=256, fc='k', ec='k')     # plot the grayscale values
         plt.title('GreyScale')
         fig.tight_layout()
         plt.show()
+        # SCALING:
+        scaler = StandardScaler().fit(arr)      # standardizing the array
+        arr_standard = scaler.transform(arr)
+        arr_mean_standard = np.mean(arr_standard)       # calculating the mean after standardization
+        arr_std_standard = np.std(arr_standard)     # calculating the std after standardization
+        print(f'[{file_name}, greyscale standard mean={arr_mean_standard:.1f}], greyscale standard std={arr_std_standard:.1f}')     # print the calculated values
     else:
-        arr_mean = np.mean(arr, axis=(0, 1))
-        arr_std = np.std(arr, axis=(0, 1))
-        print(np.mean(arr[:, :, 0]))
-        print(np.mean(arr[:, :, 1]))
-        print(np.mean(arr[:, :, 2]))
-        arr_standard = arr/256 - 0.5
-        print(np.mean(arr_standard[:, :, 2]))
-        print(np.mean(arr[:, :, 2])/256 - 0.5)
+        arr_mean = np.mean(arr, axis=(0, 1))    # calculating the mean for array
+        arr_std = np.std(arr, axis=(0, 1))      # calculating the standard deviation for array
         if len(arr_mean) == 3: #RGB CASE
             fig, ax = plt.subplots(2, 2)
             plt.subplot(221)
@@ -79,11 +86,19 @@ for image in sorted(list_img):
             plt.hist(arr[:, :, 2].ravel(), bins=256, fc='k', ec='k')
             plt.title('B')
             print(arr[:, :, 1].shape)
+            arr_standard = np.full_like(arr, 0)
+            print("arr_standard.shape: ", arr_standard.shape, "arr.shape: ", arr.shape)
 
-            # SCALING:
-            scaler = StandardScaler().fit(arr[:, :, 0])
-            arr_standard = scaler.transform(arr[:, :, 0])
-            print("scaled array: ", arr_standard)
+            for j in range(len(arr_mean)):
+                # SCALING:
+                scaler = StandardScaler().fit(arr[:, :, j])
+                arr_standard[:, :, j] = scaler.transform(arr[:, :, j])
+            arr_mean_standard = np.mean(arr_standard, axis=(0, 1))
+            arr_std_standard = np.std(arr_standard, axis=(0, 1))
+            print(f'[{file_name}, standard mean: R={arr_mean_standard[0]:.1f}, G={arr_mean_standard[1]:.1f}, '
+                  f'B={arr_mean_standard[2]:.1f}, standard std: R={arr_std_standard[0]:.1f}, '
+                  f'G={arr_std_standard[1]:.1f}, B={arr_std_standard[2]:.1f}]')
+
             fig.tight_layout()
             plt.show()
         else: #ALPHA CASE
@@ -108,8 +123,25 @@ for image in sorted(list_img):
             plt.title('A')
             fig.tight_layout()
             plt.show()
+
+            for J in range(len(arr_mean)):
+                # SCALING:
+                scaler = StandardScaler().fit(arr[:, :, J])
+                arr_standard = scaler.transform(arr[:, :, J])
+                print("scaled array: ", arr_standard)
     i += 1
 
+
+"""
+    3. Olvass be két tetszőleges hangfájlt és jelenítsd meg ezek spektrogramját. (4p)
+    4. Alakítsd át a spektogramokat 0 várható értékű és 1 szorású adathalmazzá. Ezt követően ellenőrizd a kapott
+        adathalmaz várható értékét és szórását. (4p)
+    """
+
+for sound in sorted(list_snd):
+    samplerate, data = wavfile.read(os.path.join(dst_snd, sound))
+    print("sample rate: ", samplerate)
+    print("data: ", data)
 
 
 

@@ -22,35 +22,26 @@ from scipy import signal
 from scipy.fft import fftshift
 from mp3towav import mp3towav
 
-
-
 """ 1. Python nyelven olvass be öt darab tetszőleges 256x256 pixeles színes képet, jelenítsd meg és jelenítsd meg külön az
         R, G és B csatornák értékeit hisztogramon. (4p)
     2. Csatornánként számold ki a pixelek átlagát és szórását minden képre, majd alakítsd át ezeket 0 várható értékű,
         1 szórású adathalmazzá. Ezt követően ellenőrizd a kapott adathalmaz várható értékét és szórását. (4p)"""
 
-dst_img = "/home/deak/PycharmProjects/DeepLearning/DLkisHF1/images/"
-dst_snd = "/home/deak/PycharmProjects/DeepLearning/DLkisHF1/sounds/"
+dst_img = os.getcwd() + "/images/"
+dst_snd = os.getcwd() + "/sounds/"
+mp3towav(dst_snd)   # convert mp3s to wav files
 
-mp3towav(dst_snd)
-
-arr = np.array(Image.open(os.path.join(dst_img, "kakashi.png")))
-print("Shape of array: ", arr.shape)
-print("Dimensions of array: ", arr.ndim)
 #listing files in images folder
 list_img = os.listdir(dst_img)#iterating over dst_image to get the images as arrays
 list_snd = os.listdir(dst_snd)#iterating over dst_sounds to get the sounds as arrays
 
-print("Number of files: ", len(list_img))
-
-test_arr = np.array([['R', 'G', 'B'], [0, 1, 2]])
-print("test_arr: ", test_arr[0, :])
-# plt.bar(test_arr[0, :], test_arr[1, :])
-# plt.show()
+seconds = 30    # length of calculated spectrogram
 i = 0
 mode = 1
+
 if mode < 1:
     for image in sorted(list_img):
+        [file_name, ext] = os.path.splitext(image)
          #splitting file name from its extension
         arr = np.array(Image.open(os.path.join(dst_img, image))) #creating arrays for all the images
         [h, w] = np.shape(arr)[0:2]#calculating height and width for each image
@@ -151,9 +142,9 @@ if mode < 2:
         if ext == ".wav":
             samplerate, data = wavfile.read(os.path.join(dst_snd, sound))
             print("sample rate: ", samplerate)
-            print("data: ", data)
+            # print("data: ", data)
             data_left = data[:, 0]
-            data_cut = data_left[:int(samplerate*30)]   # trim the firs 30 second
+            data_cut = data_left[:int(samplerate*seconds)]   # trim the firs 30 second
 #            f, t, Sxx = signal.spectrogram(data_cut, samplerate)   # if the output is onesided
 #            print("f: ", len(f))
 #            print("t: ", len(t))
@@ -161,6 +152,10 @@ if mode < 2:
             plt.ylabel('Frequency [Hz]')
             plt.xlabel('Time [sec]')
             plt.show()
-
+            print("mean of the powerSpectrum= ", np.mean(powerSpectrum))
+            scaler = StandardScaler().fit(powerSpectrum)
+            powerSpectrum_standard = scaler.transform(powerSpectrum)
+            print("powerSpectrum_standard.shape: ", powerSpectrum_standard.shape)
+            print(np.mean(powerSpectrum_standard))
 
 
